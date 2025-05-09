@@ -88,3 +88,22 @@ def get_all_seances():
         })
 
     return jsonify(seances), 200
+
+@seance_bp.route('/seance/<int:id>', methods=['DELETE'])
+def supprimer_seance(id):
+    cursor = mysql.connection.cursor()
+
+    # Vérifier si la séance existe
+    cursor.execute("SELECT * FROM seanceprofesseur WHERE id = %s", (id,))
+    seance = cursor.fetchone()
+
+    if not seance:
+        cursor.close()
+        return jsonify({'error': 'Séance non trouvée'}), 404
+
+    # Supprimer la séance
+    cursor.execute("DELETE FROM seanceprofesseur WHERE id = %s", (id,))
+    mysql.connection.commit()
+    cursor.close()
+
+    return jsonify({'message': 'Séance supprimée avec succès'}), 200

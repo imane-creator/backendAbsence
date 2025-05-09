@@ -3,6 +3,25 @@ from app import mysql
 
 seance_bp = Blueprint('seance', __name__)
 
+@seance_bp.route('/seance/<int:id>', methods=['DELETE'])
+def supprimer_seance(id):
+    cursor = mysql.connection.cursor()
+
+    # Vérifier si la séance existe
+    cursor.execute("SELECT * FROM seanceprofesseur WHERE id = %s", (id,))
+    seance = cursor.fetchone()
+
+    if not seance:
+        cursor.close()
+        return jsonify({'error': 'Séance non trouvée'}), 404
+
+    # Supprimer la séance
+    cursor.execute("DELETE FROM seanceprofesseur WHERE id = %s", (id,))
+    mysql.connection.commit()
+    cursor.close()
+
+    return jsonify({'message': 'Séance supprimée avec succès'}), 200
+
 @seance_bp.route('/seance', methods=['POST'])
 def ajouter_seance_professeur():
     data = request.get_json()
@@ -82,7 +101,7 @@ def get_all_seances():
             'salle': row[3],
             'date': row[4].strftime('%Y-%m-%d'),
             'heure_debut': str(row[5]).split('.')[0],  # supprime les microsecondes
-            'heure_fin': str(row[5]).split('.')[0],  # supprime les microsecondes
+            'heure_fin': str(row[6]).split('.')[0],  # supprime les microsecondes
             'professeur': row[7],
             'module': row[8]
         })

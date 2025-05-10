@@ -3,12 +3,12 @@ from app import mysql
 
 seance_bp = Blueprint('seance', __name__)
 
-@seance_bp.route('/seance/<int:id>', methods=['DELETE'])
-def supprimer_seance(id):
+@seance_bp.route('/seance/<int:seance_id>', methods=['DELETE'])
+def delete_seance(seance_id):
     cursor = mysql.connection.cursor()
 
     # Vérifier si la séance existe
-    cursor.execute("SELECT * FROM seanceprofesseur WHERE id = %s", (id,))
+    cursor.execute("SELECT * FROM seanceprofesseur WHERE id = %s", (seance_id,))
     seance = cursor.fetchone()
 
     if not seance:
@@ -16,7 +16,7 @@ def supprimer_seance(id):
         return jsonify({'error': 'Séance non trouvée'}), 404
 
     # Supprimer la séance
-    cursor.execute("DELETE FROM seanceprofesseur WHERE id = %s", (id,))
+    cursor.execute("DELETE FROM seanceprofesseur WHERE id = %s", (seance_id,))
     mysql.connection.commit()
     cursor.close()
 
@@ -71,8 +71,7 @@ def ajouter_seance_professeur():
     mysql.connection.commit()
     cursor.close()
 
-    return jsonify({'message': 'Séance ajoutée avec succès '}), 201
-
+    return jsonify({'message': 'Séance ajoutée avec succès'}), 201
 
 @seance_bp.route('/seance', methods=['GET'])
 def get_all_seances():
@@ -101,9 +100,19 @@ def get_all_seances():
             'salle': row[3],
             'date': row[4].strftime('%Y-%m-%d'),
             'heure_debut': str(row[5]).split('.')[0],  # supprime les microsecondes
-            'heure_fin': str(row[6]).split('.')[0],  # supprime les microsecondes
+            'heure_fin': str(row[6]).split('.')[0],    # supprime les microsecondes
             'professeur': row[7],
             'module': row[8]
         })
 
     return jsonify(seances), 200
+
+@seance_bp.route('/seance/<int:seance_id>/etudiants_presents', methods=['GET'])
+def get_etudiants_presents(seance_id):
+    cursor = mysql.connection.cursor()
+    query = "SELECT etudiant_nom FROM presence WHERE seance_id = %s"
+    cursor.execute(query, (seance_id,))
+    result = cursor.fetchall()
+    cursor.close()
+    etudiants = [row[0] for row in result]
+    return jsonify(etudiants), 200

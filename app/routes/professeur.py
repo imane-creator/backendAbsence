@@ -3,12 +3,12 @@ from app import mysql
 
 professeur_bp = Blueprint('professeur', __name__)
 
-
 @professeur_bp.route('/professeurs', methods=['POST'])
 def ajouter_prof():
     data = request.get_json()
     nom = data.get('nom')
     email = data.get('email')
+    mot_de_passe = data.get('mot_de_passe')  # tu peux le générer automatiquement si nécessaire
     filiere_id = data.get('filiere_id')
     module_id = data.get('module_id')
 
@@ -17,13 +17,13 @@ def ajouter_prof():
 
     cursor = mysql.connection.cursor()
     cursor.execute("""
-                   INSERT INTO professeurs (nom, email, filiere_id, module_id)
-                   VALUES (%s, %s, %s, %s)
-                   """, (nom, email, filiere_id, module_id))
+        INSERT INTO professeurs (nom, email, filiere_id, module_id, mot_de_passe)
+        VALUES (%s, %s, %s, %s, %s)
+    """, (nom, email, filiere_id, module_id, mot_de_passe))
     mysql.connection.commit()
     cursor.close()
-    return jsonify({"message": "Professeur ajouté avec succès"})
 
+    return jsonify({"message": "Professeur ajouté avec succès"})
 
 @professeur_bp.route('/professeurs', methods=['GET'])
 def get_professeurs_par_filiere_et_module():
@@ -35,11 +35,9 @@ def get_professeurs_par_filiere_et_module():
 
     cursor = mysql.connection.cursor()
     cursor.execute("""
-                   SELECT id, nom, email
-                   FROM professeurs
-                   WHERE filiere_id = %s
-                     AND module_id = %s
-                   """, (filiere_id, module_id))
+        SELECT id, nom, email FROM professeurs
+        WHERE filiere_id = %s AND module_id = %s
+    """, (filiere_id, module_id))
 
     professeurs = cursor.fetchall()
     cursor.close()
